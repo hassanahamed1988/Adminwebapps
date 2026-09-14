@@ -78,9 +78,72 @@ export function summarizePayments(user: User, transactions: PaymentTransaction[]
   };
 }
 
+/**
+ * Strict gatekeeper for the User Details Payment History section:
+ * Only subscription payments, renewals, packages, and registration fee records
+ * may be synced/displayed in this section. Payments originating from other
+ * modules (such as Mess, Family, Fuel, Trip, Purchase, Invoice, Loan, Vehicle Service, etc.)
+ * or general non-subscription expenses must NOT be synced into this section.
+ */
+export function isSubscriptionPayment(raw: any): boolean {
+  if (!raw || typeof raw !== 'object') return false;
+
+  // 1. Explicit kind check (e.g. messPayment or purchase requests stored in Firestore)
+  if (raw.kind === 'messPayment' || raw.kind === 'purchase') {
+    return false;
+  }
+
+  // 2. Explicit module / section / source metadata checks
+  const moduleStr = String(raw.module || raw.section || raw.source || '').toLowerCase().trim();
+  if (moduleStr && moduleStr !== 'subscription' && moduleStr !== 'user_renew' && moduleStr !== 'renew') {
+    const nonSubscriptionModules = [
+      'mess', 'family', 'fuel', 'trip', 'purchase', 'invoice',
+      'loan', 'vehicle', 'service', 'maintenance', 'salary', 'commission'
+    ];
+    if (nonSubscriptionModules.some((m) => moduleStr.includes(m))) {
+      return false;
+    }
+  }
+
+  // 3. Category inspection: identify if it clearly belongs to another section
+  const cat = String(raw.category || '').toLowerCase().trim();
+  if (cat) {
+    const nonSubscriptionCategories = [
+      'family', 'family maintenance', 'mess', 'mess payment', 'fuel', 'fuel expense',
+      'purchase', 'invoice', 'purchase receipt', 'trip', 'trips', 'trip payment',
+      'loan', 'loan payment', 'vehicle', 'vehicle service', 'vehicle maintenance',
+      'maintenance', 'salary', 'commission', 'deposit', 'withdrawal', 'food',
+      'bayan', 'toll', 'personal', 'business', 'daily expense', 'general expense'
+    ];
+    if (nonSubscriptionCategories.some((nc) => cat.includes(nc))) {
+      return false;
+    }
+  }
+
+  // 4. Mobile app transaction type 'EXPENSE' indicates user expense (mess, fuel, etc.), not subscription payment
+  if (String(raw.type || '').toUpperCase() === 'EXPENSE') {
+    return false;
+  }
+
+  // 5. Keyword analysis in description / remarks / note for other modules
+  const desc = String(raw.description || raw.remarks || raw.note || '').toLowerCase();
+  const nonSubKeywords = [
+    'family maintenance', 'mess payment', 'fuel expense', 'purchase receipt',
+    'trip expense', 'vehicle maintenance', 'vehicle service', 'loan repayment'
+  ];
+  if (nonSubKeywords.some((kw) => desc.includes(kw))) {
+    return false;
+  }
+
+  return true;
+}
+
 export async function fetchPayments(user: Pick<User, 'id' | 'role'>): Promise<PaymentTransaction[]> {
   const docs = await getSubcollection(paymentsPathFor(user));
-  return docs.map(normalizeTransaction).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  return docs
+    .filter(isSubscriptionPayment)
+    .map(normalizeTransaction)
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 }
 
 const VALID_TYPES: TransactionType[] = ['SUBSCRIPTION', 'PAYMENT', 'DISCOUNT', 'REFUND', 'ADJUSTMENT', 'CREDIT'];
@@ -88,28 +151,54 @@ const VALID_STATUSES: PaymentStatus[] = ['PAID', 'PENDING', 'FAILED', 'CANCELLED
 
 /**
  * Defensively fills in any field a stored doc might be missing.
- *
- * The `payments` subcollection name was already reserved (and possibly
- * already written to by something else — the mobile app, an older admin
- * build, or a partial manual entry) before this tab ever read from it, so a
- * doc that doesn't match this module's exact shape is a real possibility,
- * not just a theoretical one. Every render call site trusts transactionType
- * and status to be one of the known enum values with no fallback (e.g.
- * `tx.transactionType.toLowerCase()`), so a missing/unexpected value on
- * either field previously threw a TypeError with no error boundary to catch
- * it — crashing the whole app to a white screen. Normalizing once here,
- * right after the read, is cheaper and safer than guarding every call site.
  */
 function normalizeTransaction(raw: any): PaymentTransaction {
-  const transactionType: TransactionType = VALID_TYPES.includes(raw?.transactionType) ? raw.transactionType : 'PAYMENT';
-  const status: PaymentStatus = VALID_STATUSES.includes(raw?.status) ? raw.status : 'PENDING';
+  let rawStatus = raw?.status;
+  if (rawStatus === 'RECEIVED' || rawStatus === 'COMPLETED' || rawStatus === 'SUCCESS') {
+    rawStatus = 'PAID';
+  }
+  const status: PaymentStatus = VALID_STATUSES.includes(rawStatus) ? rawStatus : 'PENDING';
+
+  let transactionType: TransactionType = 'PAYMENT';
+  if (VALID_TYPES.includes(raw?.transactionType)) {
+    transactionType = raw.transactionType;
+  } else {
+    const cat = String(raw?.category || '').toLowerCase();
+    const desc = String(raw?.description || '').toLowerCase();
+    if (cat.includes('renew') || cat.includes('subscription') || desc.includes('renew') || desc.includes('package')) {
+      transactionType = 'SUBSCRIPTION';
+    }
+  }
+
+  const rawAmount = typeof raw?.amount === 'number' && !isNaN(raw.amount) ? raw.amount : Number(raw?.amount) || 0;
+  const rawPaidAmount =
+    typeof raw?.paidAmount === 'number' && !isNaN(raw.paidAmount)
+      ? raw.paidAmount
+      : status === 'PAID'
+      ? rawAmount
+      : undefined;
+
+  let createdAt = raw?.createdAt;
+  if (!createdAt && raw?.date) {
+    createdAt = raw?.time ? `${raw.date}T${raw.time}` : raw.date;
+  }
+  if (!createdAt) {
+    createdAt = new Date().toISOString();
+  }
+
+  const referenceId = raw?.referenceId || raw?.transactionId || raw?.txnId || undefined;
+
   return {
     ...raw,
     id: raw?.id || '',
     transactionType,
     status,
-    amount: typeof raw?.amount === 'number' && !isNaN(raw.amount) ? raw.amount : Number(raw?.amount) || 0,
-    createdAt: raw?.createdAt || '',
+    amount: rawAmount,
+    paidAmount: rawPaidAmount,
+    createdAt: String(createdAt),
+    referenceId,
+    category: raw?.category || 'Subscription',
+    section: raw?.section || 'subscription',
   };
 }
 
@@ -161,6 +250,8 @@ export async function saveTransaction(
   const record: PaymentTransaction = {
     ...tx,
     id,
+    category: tx.category || 'Subscription',
+    section: tx.section || 'subscription',
     createdAt,
     updatedAt: now,
     ...(auditLog ? { auditLog } : {}),

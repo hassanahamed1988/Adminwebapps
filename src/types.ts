@@ -101,6 +101,8 @@ export interface PaymentTransaction {
   paymentDetails?: Record<string, string>;
   status: PaymentStatus;
   referenceId?: string;
+  category?: string;
+  section?: string;
   note?: string;
   createdBy?: string;
   createdAt: string;
