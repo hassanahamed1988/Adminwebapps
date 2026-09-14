@@ -52,6 +52,7 @@ const UserListPage: React.FC<{ bucket: AccountBucket }> = ({ bucket }) => {
         (u.email || '').toLowerCase().includes(q) ||
         (u.id || '').toLowerCase().includes(q) ||
         (u.userId || '').toLowerCase().includes(q) ||
+        (u.applicationId || '').toLowerCase().includes(q) ||
         (u.mobile || u.mobileNumber || '').toLowerCase().includes(q)
     );
   }, [users, bucket, search]);

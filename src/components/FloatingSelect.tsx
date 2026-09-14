@@ -1,7 +1,8 @@
-import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, ChevronDown, LucideIcon } from 'lucide-react';
+import { Check, ChevronDown, LucideIcon, Search, X } from 'lucide-react';
 import { FieldAccent, ACCENT_RING } from '../styles/controls';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Option {
   value: string;
@@ -77,12 +78,30 @@ const FloatingSelect: React.FC<Props> = ({
   const panelRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
+  const { t } = useLanguage();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Clear search on open/close
+  useEffect(() => {
+    if (!open) {
+      setSearchQuery('');
+    }
+  }, [open]);
+
   const hasValue = value !== '';
   const selected = options.find((o) => o.value === value);
   // The blank sentinel ({ value: '', label: '...নির্বাচন করুন' }) exists so
   // the field has a "no selection" state for validation — the floating
   // label already communicates that, so we don't show it as a row.
-  const visibleOptions = options.filter((o) => o.value !== '');
+  const visibleOptions = useMemo(() => {
+    const base = options.filter((o) => o.value !== '');
+    if (!searchQuery.trim()) return base;
+    const q = searchQuery.toLowerCase().trim();
+    return base.filter((o) => {
+      if (o.value === '__ADD_NEW__') return true;
+      return o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q);
+    });
+  }, [options, searchQuery]);
 
   // Icon hides the moment the field is focused/open (same as FloatingInput).
   const iconHidden = focused || open;
@@ -228,21 +247,52 @@ const FloatingSelect: React.FC<Props> = ({
           <div
             ref={panelRef}
             style={{ position: 'fixed', top: rect.bottom + 6, left: rect.left, width: rect.width }}
-            className="z-[100] max-h-64 overflow-y-auto thin-scroll rounded-xl border border-ink-900/10 bg-surface shadow-2xl dropdown-pop py-1.5"
+            className="z-[100] flex flex-col max-h-64 rounded-xl border border-ink-900/10 bg-surface shadow-2xl dropdown-pop overflow-hidden"
           >
-            {visibleOptions.map((o) => (
-              <button
-                key={o.value}
-                type="button"
-                onClick={() => handleSelect(o.value)}
-                className={`w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-sm text-left hover:bg-ink-900/5 ${
-                  o.value === value ? 'font-bold text-signal-600' : 'font-medium text-ink-900'
-                }`}
-              >
-                <span className="truncate">{o.label}</span>
-                {o.value === value && <Check size={15} className="shrink-0" />}
-              </button>
-            ))}
+            {/* Search Input */}
+            <div className="p-2 border-b border-ink-900/8 bg-ink-900/[0.01] shrink-0 flex items-center gap-1.5">
+              <Search size={14} className="text-ink-400 shrink-0 ml-1" />
+              <input
+                type="text"
+                placeholder={t('common.search') || 'Search...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full text-xs bg-transparent focus:outline-none text-ink-900 font-medium placeholder-ink-400"
+                autoFocus
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="p-0.5 rounded hover:bg-ink-900/5 text-ink-400 hover:text-ink-600"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+
+            {/* Options list */}
+            <div className="overflow-y-auto thin-scroll py-1.5 flex-1">
+              {visibleOptions.length === 0 ? (
+                <div className="px-3.5 py-3 text-xs text-ink-400 font-medium text-center">
+                  {t('common.noResults') || 'No results found'}
+                </div>
+              ) : (
+                visibleOptions.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => handleSelect(o.value)}
+                    className={`w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-sm text-left hover:bg-ink-900/5 ${
+                      o.value === value ? 'font-bold text-signal-600 bg-signal-500/5' : 'font-medium text-ink-900'
+                    }`}
+                  >
+                    <span className="truncate">{o.label}</span>
+                    {o.value === value && <Check size={15} className="shrink-0 text-signal-600" />}
+                  </button>
+                ))
+              )}
+            </div>
           </div>,
           document.body
         )}
@@ -267,20 +317,48 @@ const FloatingSelect: React.FC<Props> = ({
               <div className="px-5 pt-1 pb-3 border-b border-ink-900/8 shrink-0">
                 <p className="text-sm font-bold text-ink-900">{label}</p>
               </div>
-              <div className="overflow-y-auto thin-scroll py-1.5">
-                {visibleOptions.map((o) => (
+
+              {/* Search Bar for Mobile */}
+              <div className="px-5 py-2 border-b border-ink-900/8 bg-ink-900/[0.01] shrink-0 flex items-center gap-2">
+                <Search size={16} className="text-ink-400 shrink-0" />
+                <input
+                  type="text"
+                  placeholder={t('common.search') || 'Search...'}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full text-sm bg-transparent focus:outline-none text-ink-900 font-medium placeholder-ink-400 py-1"
+                />
+                {searchQuery && (
                   <button
-                    key={o.value}
                     type="button"
-                    onClick={() => handleSelect(o.value)}
-                    className={`w-full flex items-center justify-between gap-2 px-5 py-3.5 text-[15px] text-left active:bg-ink-900/5 ${
-                      o.value === value ? 'font-bold text-signal-600' : 'font-medium text-ink-900'
-                    }`}
+                    onClick={() => setSearchQuery('')}
+                    className="p-1 rounded-lg hover:bg-ink-900/5 text-ink-400 hover:text-ink-600 flex items-center justify-center"
                   >
-                    <span className="truncate">{o.label}</span>
-                    {o.value === value && <Check size={17} className="shrink-0" />}
+                    <X size={15} />
                   </button>
-                ))}
+                )}
+              </div>
+
+              <div className="overflow-y-auto thin-scroll py-1.5 flex-1">
+                {visibleOptions.length === 0 ? (
+                  <div className="px-5 py-6 text-sm text-ink-400 font-medium text-center">
+                    {t('common.noResults') || 'No results found'}
+                  </div>
+                ) : (
+                  visibleOptions.map((o) => (
+                    <button
+                      key={o.value}
+                      type="button"
+                      onClick={() => handleSelect(o.value)}
+                      className={`w-full flex items-center justify-between gap-2 px-5 py-3.5 text-[15px] text-left active:bg-ink-900/5 ${
+                        o.value === value ? 'font-bold text-signal-600 bg-signal-500/5' : 'font-medium text-ink-900'
+                      }`}
+                    >
+                      <span className="truncate">{o.label}</span>
+                      {o.value === value && <Check size={17} className="shrink-0 text-signal-600" />}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           </div>,

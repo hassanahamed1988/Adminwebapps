@@ -58,7 +58,7 @@ const DesktopModalCard: React.FC<Props> = ({
   const close = () => navigate(closeTo);
 
   const cardClassName =
-    'relative flex flex-col w-full h-[100dvh] md:h-auto md:max-h-[85vh] md:w-full md:max-w-3xl bg-surface md:rounded-2xl md:shadow-2xl overflow-hidden modal-pop-in';
+    'relative flex flex-col w-full h-[100dvh] md:h-auto md:max-h-[85vh] md:w-full md:max-w-4xl bg-surface md:rounded-2xl md:shadow-2xl overflow-hidden modal-pop-in';
 
   const cardContent = (
     <>
@@ -77,10 +77,9 @@ const DesktopModalCard: React.FC<Props> = ({
 
   return (
     <div className="fixed inset-0 z-40 flex md:items-center md:justify-center md:p-6">
-      {/* Backdrop — desktop only, click to close */}
+      {/* Backdrop — desktop only */}
       <div
         className="hidden md:block md:absolute md:inset-0 md:bg-ink-900/40 md:backdrop-blur-sm"
-        onClick={close}
       />
 
       {/* Card / full-screen panel */}

@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import bcrypt from 'bcryptjs';
 import { getCollection, getSubcollection, saveDoc, deleteDocFrom } from '../services/firebase';
 import { User } from '../types';
+import { generateUserId, generateAccountNumber } from '../utils/accountUtils';
 
 const SUBCOLLECTIONS = [
   'trips',
@@ -54,9 +55,36 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setError(null);
     try {
       const [usersCol, adminsCol] = await Promise.all([getCollection('users'), getCollection('admins')]);
+      const normalizedUsers = usersCol.filter((u) => u.id !== 'Admin').map((u) => {
+        // Fallback checks for Identity Document fields
+        const idType = u.idType || u.documentType || u.docType || u.idCardType || '';
+        const idNumber = u.idNumber || u.documentNumber || u.idNo || u.docNo || u.idCardNumber || u.nid || u.passport || '';
+        const idIssueCountry = u.idIssueCountry || u.documentIssueCountry || u.issueCountry || '';
+        const idExpiryDate = u.idExpiryDate || u.documentExpiry || u.expiryDate || u.docExpiry || '';
+        return {
+          ...u,
+          idType,
+          idNumber,
+          idIssueCountry,
+          idExpiryDate,
+        };
+      });
       const merged: User[] = [
-        ...usersCol.filter((u) => u.id !== 'Admin'),
-        ...adminsCol.map((a) => ({ ...a, role: 'ADMIN' as const })),
+        ...normalizedUsers,
+        ...adminsCol.map((a) => {
+          const idType = a.idType || a.documentType || a.docType || a.idCardType || '';
+          const idNumber = a.idNumber || a.documentNumber || a.idNo || a.docNo || a.idCardNumber || a.nid || a.passport || '';
+          const idIssueCountry = a.idIssueCountry || a.documentIssueCountry || a.issueCountry || '';
+          const idExpiryDate = a.idExpiryDate || a.documentExpiry || a.expiryDate || a.docExpiry || '';
+          return {
+            ...a,
+            role: 'ADMIN' as const,
+            idType,
+            idNumber,
+            idIssueCountry,
+            idExpiryDate,
+          };
+        }),
       ];
       setUsers(merged);
     } catch (e: any) {
@@ -78,9 +106,26 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const target = usersRef.current.find((u) => u.id === id);
     if (!target) return;
     const hashed = await bcrypt.hash(tempPassword, 10);
-    const updated: User = { ...target, status: 'ENABLED', statusTimestamp: new Date().toISOString(), password: hashed };
+    
+    // User ID is only generated upon admin approval if it does not exist yet.
+    const finalUserId = target.userId || generateUserId(usersRef.current);
+    const finalAccountNumber = target.accountNumber || generateAccountNumber();
+
+    const updated: User = { 
+      ...target, 
+      userId: finalUserId,
+      accountNumber: finalAccountNumber,
+      status: 'ENABLED', 
+      statusTimestamp: new Date().toISOString(), 
+      password: hashed 
+    };
     await saveDoc(collectionFor(updated), updated.id, updated);
-    patchLocal(id, { status: 'ENABLED', statusTimestamp: updated.statusTimestamp });
+    patchLocal(id, { 
+      userId: finalUserId,
+      accountNumber: finalAccountNumber,
+      status: 'ENABLED', 
+      statusTimestamp: updated.statusTimestamp 
+    });
   }, []);
 
   const rejectUser = useCallback(async (id: string) => {

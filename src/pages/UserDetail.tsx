@@ -98,6 +98,7 @@ const UserDetail: React.FC = () => {
       bankName: user.bankName || '',
       accountHolderName: user.accountHolderName || '',
       accountOrChequeNumber: user.accountOrChequeNumber || '',
+      idExpiryDate: user.idExpiryDate || '',
       paidAmount: user.paidAmount !== undefined && user.paidAmount !== null ? String(user.paidAmount) : '',
       dueAmount: user.dueAmount !== undefined && user.dueAmount !== null ? String(user.dueAmount) : '',
     });
@@ -336,7 +337,11 @@ const UserDetail: React.FC = () => {
                 <div className="flex-1 min-w-[160px]">
                   <h2 className="font-display font-extrabold text-lg text-ink-900">{user.name}</h2>
                   <p className="font-mono text-xs text-ink-400 mt-0.5">
-                    {user.role} · ID: {user.id}
+                    {user.role}
+                    {user.status === 'PENDING' 
+                      ? ` · ${t('userDetail.applicationId')}: ${user.applicationId || user.id}`
+                      : ` · ${t('userDetail.userId')}: ${user.userId || user.id}`
+                    }
                     {user.accountNumber ? ` · A/C: ${user.accountNumber}` : ''}
                   </p>
                 </div>

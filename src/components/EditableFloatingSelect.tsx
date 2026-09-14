@@ -57,7 +57,14 @@ const EditableFloatingSelect: React.FC<Props> = ({
   const mergedOptions = useMemo<Option[]>(() => {
     const custom = customOptions[field] || [];
     const seen = new Set(options.map((o) => o.value.toLowerCase()));
-    const extra = custom.filter((o) => !seen.has(o.value.toLowerCase()));
+    const extra = custom
+      .filter((o) => !seen.has(o.value.toLowerCase()))
+      .map((o) => {
+        if ((field === 'nationality' || field === 'country') && !/^[\u{1F1E6}-\u{1F1FF}]{2}/u.test(o.label) && !o.label.startsWith('🌐')) {
+          return { ...o, label: `🌐 ${o.label}` };
+        }
+        return o;
+      });
     const combined = [...options, ...extra];
 
     // If the field already holds a value that isn't in the built-in or
@@ -66,7 +73,12 @@ const EditableFloatingSelect: React.FC<Props> = ({
     // doesn't blank out or silently change existing records.
     const combinedSeen = new Set(combined.map((o) => o.value.toLowerCase()));
     if (value && !combinedSeen.has(value.toLowerCase())) {
-      combined.push({ value, label: value });
+      let displayLabel = value;
+      if ((field === 'nationality' || field === 'country') && !/^[\u{1F1E6}-\u{1F1FF}]{2}/u.test(value) && !value.startsWith('🌐')) {
+        // Find if any existing base/custom has it, otherwise prepend 🌐
+        displayLabel = `🌐 ${value}`;
+      }
+      combined.push({ value, label: displayLabel });
     }
 
     return [...combined, { value: ADD_NEW_SENTINEL, label: t('editableSelect.addNew') }];

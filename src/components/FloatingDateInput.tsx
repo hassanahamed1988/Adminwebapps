@@ -124,6 +124,8 @@ const FloatingDateInput: React.FC<Props> = ({ label, value, onChange, required, 
   /* Desktop calendar state */
   const [viewMonth, setViewMonth] = useState(parsed ? parsed.m : today.getMonth() + 1);
   const [viewYear, setViewYear] = useState(parsed ? parsed.y : today.getFullYear());
+  const [monthModalOpen, setMonthModalOpen] = useState(false);
+  const [yearModalOpen, setYearModalOpen] = useState(false);
 
   /* Mobile wheel state */
   const [wheelD, setWheelD] = useState(parsed ? parsed.d : 1);
@@ -218,6 +220,8 @@ const FloatingDateInput: React.FC<Props> = ({ label, value, onChange, required, 
   const closeAll = () => {
     setOpen(false);
     setFocused(false);
+    setMonthModalOpen(false);
+    setYearModalOpen(false);
   };
 
   const pickDay = (d: number) => {
@@ -310,7 +314,7 @@ const FloatingDateInput: React.FC<Props> = ({ label, value, onChange, required, 
           <div
             ref={panelRef}
             style={{ position: 'fixed', top: rect.bottom + 6, left: rect.left, width: 320 }}
-            className="z-[100] rounded-2xl border border-ink-900/10 bg-surface shadow-2xl dropdown-pop p-4"
+            className="relative z-[100] rounded-2xl border border-ink-900/10 bg-surface shadow-2xl dropdown-pop p-4"
           >
             <div className="flex items-center gap-1 mb-3">
               <button
@@ -327,32 +331,24 @@ const FloatingDateInput: React.FC<Props> = ({ label, value, onChange, required, 
                   its own wheel columns for day/month/year. */}
               <div className="flex-1 flex items-center justify-center gap-1.5 min-w-0">
                 <div className="relative min-w-0">
-                  <select
-                    value={viewMonth}
-                    onChange={(e) => setViewMonth(Number(e.target.value))}
-                    className="appearance-none w-full min-w-0 text-xs font-bold text-ink-900 bg-ink-900/[0.03] border border-ink-900/10 rounded-lg pl-2.5 pr-6 py-1.5 focus:outline-none focus:ring-2 focus:ring-signal-500/30 hover:bg-ink-900/[0.06] cursor-pointer truncate"
+                  <button
+                    type="button"
+                    onClick={() => setMonthModalOpen(true)}
+                    className="w-full text-xs font-bold text-ink-900 bg-ink-900/[0.03] border border-ink-900/10 rounded-lg pl-2.5 pr-6 py-1.5 focus:outline-none focus:ring-2 focus:ring-signal-500/30 hover:bg-ink-900/[0.06] cursor-pointer truncate text-left flex items-center justify-between"
                   >
-                    {MONTHS.map((m, i) => (
-                      <option key={m} value={i + 1}>
-                        {m}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={12} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-ink-400 pointer-events-none" />
+                    <span>{MONTHS[viewMonth - 1]}</span>
+                    <ChevronDown size={12} className="text-ink-400 pointer-events-none ml-1 shrink-0" />
+                  </button>
                 </div>
                 <div className="relative shrink-0">
-                  <select
-                    value={viewYear}
-                    onChange={(e) => setViewYear(Number(e.target.value))}
-                    className="appearance-none text-xs font-bold text-ink-900 bg-ink-900/[0.03] border border-ink-900/10 rounded-lg pl-2.5 pr-6 py-1.5 focus:outline-none focus:ring-2 focus:ring-signal-500/30 hover:bg-ink-900/[0.06] cursor-pointer"
+                  <button
+                    type="button"
+                    onClick={() => setYearModalOpen(true)}
+                    className="text-xs font-bold text-ink-900 bg-ink-900/[0.03] border border-ink-900/10 rounded-lg pl-2.5 pr-6 py-1.5 focus:outline-none focus:ring-2 focus:ring-signal-500/30 hover:bg-ink-900/[0.06] cursor-pointer flex items-center justify-between"
                   >
-                    {yearItems.map((y) => (
-                      <option key={y.value} value={y.value}>
-                        {y.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={12} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-ink-400 pointer-events-none" />
+                    <span>{viewYear}</span>
+                    <ChevronDown size={12} className="text-ink-400 pointer-events-none ml-1 shrink-0" />
+                  </button>
                 </div>
               </div>
 
@@ -396,6 +392,76 @@ const FloatingDateInput: React.FC<Props> = ({ label, value, onChange, required, 
                 );
               })}
             </div>
+
+            {/* Custom Month overlay on top */}
+            {monthModalOpen && (
+              <div className="absolute inset-0 bg-surface rounded-2xl p-4 flex flex-col z-[110] rise-in">
+                <div className="flex items-center justify-between pb-2 border-b border-ink-900/8 mb-3 shrink-0">
+                  <span className="text-xs font-bold text-ink-900">Select Month</span>
+                  <button
+                    type="button"
+                    onClick={() => setMonthModalOpen(false)}
+                    className="text-xs font-bold text-signal-600 hover:text-signal-700"
+                  >
+                    Back
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-2 overflow-y-auto thin-scroll flex-1 py-1">
+                  {MONTHS.map((m, i) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => {
+                        setViewMonth(i + 1);
+                        setMonthModalOpen(false);
+                      }}
+                      className={`py-2 px-1 text-center rounded-lg text-xs font-bold transition-colors ${
+                        viewMonth === i + 1
+                          ? 'bg-signal-500 text-white'
+                          : 'text-ink-700 hover:bg-ink-900/5 bg-ink-900/[0.02]'
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Custom Year overlay on top */}
+            {yearModalOpen && (
+              <div className="absolute inset-0 bg-surface rounded-2xl p-4 flex flex-col z-[110] rise-in">
+                <div className="flex items-center justify-between pb-2 border-b border-ink-900/8 mb-3 shrink-0">
+                  <span className="text-xs font-bold text-ink-900">Select Year</span>
+                  <button
+                    type="button"
+                    onClick={() => setYearModalOpen(false)}
+                    className="text-xs font-bold text-signal-600 hover:text-signal-700"
+                  >
+                    Back
+                  </button>
+                </div>
+                <div className="grid grid-cols-4 gap-1.5 overflow-y-auto thin-scroll flex-1 py-1">
+                  {yearItems.map((y) => (
+                    <button
+                      key={y.value}
+                      type="button"
+                      onClick={() => {
+                        setViewYear(y.value);
+                        setYearModalOpen(false);
+                      }}
+                      className={`py-1.5 px-0.5 text-center rounded-lg text-xs font-bold transition-colors ${
+                        viewYear === y.value
+                          ? 'bg-signal-500 text-white'
+                          : 'text-ink-700 hover:bg-ink-900/5 bg-ink-900/[0.02]'
+                      }`}
+                    >
+                      {y.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>,
           document.body
         )}

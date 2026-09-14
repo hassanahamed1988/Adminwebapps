@@ -55,7 +55,17 @@ export const COUNTRY_VALUES = [
   'Morocco',
 ];
 
-export const getCountries = (t: T): DropdownOption[] => buildOptions(t, 'option.country', COUNTRY_VALUES);
+export const getCountries = (t: T): DropdownOption[] => {
+  const base = buildOptions(t, 'option.country', COUNTRY_VALUES);
+  return base.map((o) => {
+    if (!o.value) return o;
+    const flag = COUNTRY_FLAGS[o.value] || '🌐';
+    return {
+      ...o,
+      label: `${flag} ${o.label}`,
+    };
+  });
+};
 
 export const NATIONALITY_VALUES = [
   'Bangladeshi',
@@ -90,4 +100,81 @@ export const NATIONALITY_VALUES = [
   'Moroccan',
 ];
 
-export const getNationalities = (t: T): DropdownOption[] => buildOptions(t, 'option.nationality', NATIONALITY_VALUES);
+const NATIONALITY_FLAGS: Record<string, string> = {
+  'Bangladeshi': '🇧🇩',
+  'Indian': '🇮🇳',
+  'American': '🇺🇸',
+  'British': '🇬🇧',
+  'Emirati': '🇦🇪',
+  'Saudi': '🇸🇦',
+  'Qatari': '🇶🇦',
+  'Kuwaiti': '🇰🇼',
+  'Omani': '🇴🇲',
+  'Bahraini': '🇧🇭',
+  'Malaysian': '🇲🇾',
+  'Singaporean': '🇸🇬',
+  'Japanese': '🇯🇵',
+  'South Korean': '🇰🇷',
+  'Chinese': '🇨🇳',
+  'German': '🇩🇪',
+  'French': '🇫🇷',
+  'Italian': '🇮🇹',
+  'Russian': '🇷🇺',
+  'Brazilian': '🇧🇷',
+  'South African': '🇿🇦',
+  'Australian': '🇦🇺',
+  'New Zealander': '🇳🇿',
+  'Pakistani': '🇵🇰',
+  'Sri Lankan': '🇱🇰',
+  'Nepali': '🇳🇵',
+  'Egyptian': '🇪🇬',
+  'Nigerian': '🇳🇬',
+  'Kenyan': '🇰🇪',
+  'Moroccan': '🇲🇦',
+};
+
+export const getNationalities = (t: T): DropdownOption[] => {
+  const base = buildOptions(t, 'option.nationality', NATIONALITY_VALUES);
+  return base.map((o) => {
+    if (!o.value) return o;
+    const flag = NATIONALITY_FLAGS[o.value] || '🌐';
+    return {
+      ...o,
+      label: `${flag} ${o.label}`,
+    };
+  });
+};
+
+const COUNTRY_FLAGS: Record<string, string> = {
+  'Bangladesh': '🇧🇩',
+  'India': '🇮🇳',
+  'United States': '🇺🇸',
+  'United Kingdom': '🇬🇧',
+  'United Arab Emirates': '🇦🇪',
+  'Saudi Arabia': '🇸🇦',
+  'Qatar': '🇶🇦',
+  'Kuwait': '🇰🇼',
+  'Oman': '🇴🇲',
+  'Bahrain': '🇧🇭',
+  'Malaysia': '🇲🇾',
+  'Singapore': '🇸🇬',
+  'Japan': '🇯🇵',
+  'South Korea': '🇰🇷',
+  'China': '🇨🇳',
+  'Germany': '🇩🇪',
+  'France': '🇫🇷',
+  'Italy': '🇮🇹',
+  'Russia': '🇷🇺',
+  'Brazil': '🇧🇷',
+  'South Africa': '🇿🇦',
+  'Australia': '🇦🇺',
+  'New Zealand': '🇳🇿',
+  'Pakistan': '🇵🇰',
+  'Sri Lanka': '🇱🇰',
+  'Nepal': '🇳🇵',
+  'Egypt': '🇪🇬',
+  'Nigeria': '🇳🇬',
+  'Kenya': '🇰🇪',
+  'Morocco': '🇲🇦',
+};
+

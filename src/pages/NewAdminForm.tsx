@@ -47,8 +47,8 @@ import { getGenders, getReligions, getProfessions, getDocumentTypes, documentNum
 const GRID_COLS: Record<number, string> = {
   1: 'grid-cols-1',
   2: 'grid-cols-1 sm:grid-cols-2',
-  3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-  4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
+  3: 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3',
+  4: 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3',
 };
 
 const StepCard: React.FC<{ title: string; subtitle?: string; cols?: number; children: React.ReactNode }> = ({
@@ -107,6 +107,7 @@ const EMPTY_FORM = {
   idIssueCountry: '',
   idType: '',
   idNumber: '',
+  idExpiryDate: '',
   // Address
   country: '',
   buildingNumber: '',
@@ -242,6 +243,7 @@ const NewAdminForm: React.FC = () => {
         idIssueCountry: form.idIssueCountry.trim(),
         idType: form.idType,
         idNumber: form.idNumber.trim(),
+        idExpiryDate: form.idExpiryDate,
         country: form.country.trim(),
         presentCountry: form.country.trim(),
         buildingNumber: form.buildingNumber.trim(),
@@ -394,7 +396,7 @@ const NewAdminForm: React.FC = () => {
                 <FloatingInput label={t('newAdminForm.emailLogin')} icon={Mail} type="email" required value={form.email} onChange={(v) => set('email', v)} error={errors.email} />
                 <FloatingInput label={t('newUserForm.whatsapp')} icon={MessageCircle} value={form.whatsapp} onChange={(v) => set('whatsapp', v)} />
                 {/* Full-width phone input with code selector */}
-                <div className="sm:col-span-2 lg:col-span-4">
+                <div className="sm:col-span-2 md:col-span-3">
                   <PhoneCountryInput
                     label={t('newAdminForm.mobileOptional')}
                     countryCode={form.countryCode}
@@ -410,10 +412,11 @@ const NewAdminForm: React.FC = () => {
 
           {/* Document / ID */}
           {activeKey === 'document' && (
-            <StepCard title={t('newUserForm.document')} cols={3}>
+            <StepCard title={t('newUserForm.document')} cols={4}>
               <EditableFloatingSelect label={t('field.idIssueCountry')} icon={Globe2} field="country" value={form.idIssueCountry} onChange={(v) => set('idIssueCountry', v)} options={getCountries(t)} />
               <EditableFloatingSelect label={t('field.documentType')} icon={FileText} field="documentType" value={form.idType} onChange={(v) => set('idType', v)} options={getDocumentTypes(t)} />
               <FloatingInput label={documentNumberLabel(t, form.idType)} icon={CreditCard} value={form.idNumber} onChange={(v) => set('idNumber', v)} mono error={errors.idNumber} />
+              <FloatingDateInput label={t('userDetail.expiryDate')} value={form.idExpiryDate} onChange={(v) => set('idExpiryDate', v)} />
             </StepCard>
           )}
 

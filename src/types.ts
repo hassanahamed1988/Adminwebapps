@@ -30,6 +30,7 @@ export interface User {
   idIssueCountry?: string;
   idType?: string;
   idNumber?: string;
+  idExpiryDate?: string;
   // Address
   isFirstLogin?: boolean;
   passwordChangedAt?: string;

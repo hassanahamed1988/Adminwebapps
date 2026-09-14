@@ -74,7 +74,26 @@ const PersonalInfoTab: React.FC<Props> = ({ user, editing, form, formErrors, sav
           )}
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-5">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-5">
+          {user.status === 'PENDING' ? (
+            <FloatingInput
+              label={t('userDetail.applicationId')}
+              icon={Hash}
+              disabled
+              value={user.applicationId || user.id}
+              onChange={() => {}}
+            />
+          ) : (
+            user.userId && (
+              <FloatingInput
+                label={t('userDetail.userId')}
+                icon={Hash}
+                disabled
+                value={user.userId}
+                onChange={() => {}}
+              />
+            )
+          )}
           <FloatingInput
             label={t('userDetail.name')}
             icon={UserPlus}
@@ -91,7 +110,7 @@ const PersonalInfoTab: React.FC<Props> = ({ user, editing, form, formErrors, sav
             onChange={(v) => setForm((f) => ({ ...f, email: v }))}
           />
           {editing ? (
-            <div className="sm:col-span-2">
+            <div className="lg:col-span-1">
               <PhoneCountryInput
                 label={t('userDetail.mobile')}
                 countryCode={form.countryCode || '+880'}
@@ -102,13 +121,16 @@ const PersonalInfoTab: React.FC<Props> = ({ user, editing, form, formErrors, sav
               />
             </div>
           ) : (
-            <FloatingInput
-              label={t('userDetail.mobile')}
-              icon={Phone}
-              disabled
-              value={user.mobileNumber || (user.mobile ? `${user.countryCode || ''}${user.mobile}` : '')}
-              onChange={() => {}}
-            />
+            <div className="lg:col-span-1">
+              <PhoneCountryInput
+                label={t('userDetail.mobile')}
+                countryCode={user.countryCode || '+880'}
+                onCodeChange={() => {}}
+                number={user.mobile || user.mobileNumber || ''}
+                onNumberChange={() => {}}
+                disabled
+              />
+            </div>
           )}
           <FloatingInput
             label={t('newUserForm.whatsapp')}
@@ -164,7 +186,7 @@ const PersonalInfoTab: React.FC<Props> = ({ user, editing, form, formErrors, sav
       {/* Additional personal info */}
       <div className="bg-surface rounded-2xl border border-ink-900/8 card-shadow p-5 mb-5">
         <h3 className="font-display font-extrabold text-sm text-ink-900 mb-4">{t('userDetail.additionalPersonalInfo')}</h3>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-5">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-5">
           {editing ? (
             <FloatingDateInput label={t('newUserForm.dob')} value={form.dob || ''} onChange={(v) => setForm((f) => ({ ...f, dob: v }))} />
           ) : (
@@ -203,7 +225,7 @@ const PersonalInfoTab: React.FC<Props> = ({ user, editing, form, formErrors, sav
       {/* Document / ID info */}
       <div className="bg-surface rounded-2xl border border-ink-900/8 card-shadow p-5 mb-5">
         <h3 className="font-display font-extrabold text-sm text-ink-900 mb-4">{t('userDetail.document')}</h3>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-5">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-5">
           <EditableFloatingSelect
             label={t('userDetail.idIssueCountry')}
             icon={Globe2}
@@ -231,13 +253,28 @@ const PersonalInfoTab: React.FC<Props> = ({ user, editing, form, formErrors, sav
             onChange={(v) => setForm((f) => ({ ...f, idNumber: v }))}
             error={formErrors.idNumber}
           />
+          {editing ? (
+            <FloatingDateInput
+              label={t('userDetail.expiryDate')}
+              value={form.idExpiryDate || ''}
+              onChange={(v) => setForm((f) => ({ ...f, idExpiryDate: v }))}
+            />
+          ) : (
+            <FloatingInput
+              label={t('userDetail.expiryDate')}
+              icon={Calendar}
+              disabled
+              value={user.idExpiryDate || '—'}
+              onChange={() => {}}
+            />
+          )}
         </div>
       </div>
 
       {/* Address */}
       <div className="bg-surface rounded-2xl border border-ink-900/8 card-shadow p-5">
         <h3 className="font-display font-extrabold text-sm text-ink-900 mb-4">{t('userDetail.address')}</h3>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-5">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-5">
           <FloatingInput label={t('userDetail.buildingNumber')} icon={Building2} disabled={!editing} value={editing ? form.buildingNumber || '' : user.buildingNumber || '—'} onChange={(v) => setForm((f) => ({ ...f, buildingNumber: v }))} />
           <FloatingInput label={t('userDetail.zoneNumber')} icon={MapPin} disabled={!editing} value={editing ? form.zoneNumber || '' : user.zoneNumber || '—'} onChange={(v) => setForm((f) => ({ ...f, zoneNumber: v }))} />
           <FloatingInput label={t('userDetail.streetNumber')} icon={MapIcon} disabled={!editing} value={editing ? form.streetNumber || '' : user.streetNumber || '—'} onChange={(v) => setForm((f) => ({ ...f, streetNumber: v }))} />

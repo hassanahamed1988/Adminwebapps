@@ -1,6 +1,6 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, ChevronDown, Phone } from 'lucide-react';
+import { Check, ChevronDown, Phone, Search, X } from 'lucide-react';
 import { useIsMobile } from './FloatingSelect';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -13,36 +13,36 @@ import { useLanguage } from '../contexts/LanguageContext';
    Shared between MobileAppNewUserForm and NewAdminForm so both stay in
    sync on the same country-code list and behaviour.                    */
 export const COUNTRY_CODES = [
-  { code: '+880', flag: '🇧🇩', name: 'BD' },
-  { code: '+91',  flag: '🇮🇳', name: 'IN' },
-  { code: '+1',   flag: '🇺🇸', name: 'US' },
-  { code: '+44',  flag: '🇬🇧', name: 'GB' },
-  { code: '+971', flag: '🇦🇪', name: 'AE' },
-  { code: '+966', flag: '🇸🇦', name: 'SA' },
-  { code: '+974', flag: '🇶🇦', name: 'QA' },
-  { code: '+965', flag: '🇰🇼', name: 'KW' },
-  { code: '+968', flag: '🇴🇲', name: 'OM' },
-  { code: '+973', flag: '🇧🇭', name: 'BH' },
-  { code: '+60',  flag: '🇲🇾', name: 'MY' },
-  { code: '+65',  flag: '🇸🇬', name: 'SG' },
-  { code: '+81',  flag: '🇯🇵', name: 'JP' },
-  { code: '+82',  flag: '🇰🇷', name: 'KR' },
-  { code: '+86',  flag: '🇨🇳', name: 'CN' },
-  { code: '+49',  flag: '🇩🇪', name: 'DE' },
-  { code: '+33',  flag: '🇫🇷', name: 'FR' },
-  { code: '+39',  flag: '🇮🇹', name: 'IT' },
-  { code: '+7',   flag: '🇷🇺', name: 'RU' },
-  { code: '+55',  flag: '🇧🇷', name: 'BR' },
-  { code: '+27',  flag: '🇿🇦', name: 'ZA' },
-  { code: '+61',  flag: '🇦🇺', name: 'AU' },
-  { code: '+64',  flag: '🇳🇿', name: 'NZ' },
-  { code: '+92',  flag: '🇵🇰', name: 'PK' },
-  { code: '+94',  flag: '🇱🇰', name: 'LK' },
-  { code: '+977', flag: '🇳🇵', name: 'NP' },
-  { code: '+20',  flag: '🇪🇬', name: 'EG' },
-  { code: '+234', flag: '🇳🇬', name: 'NG' },
-  { code: '+254', flag: '🇰🇪', name: 'KE' },
-  { code: '+212', flag: '🇲🇦', name: 'MA' },
+  { code: '+880', flag: '🇧🇩', name: 'Bangladesh' },
+  { code: '+91',  flag: '🇮🇳', name: 'India' },
+  { code: '+1',   flag: '🇺🇸', name: 'United States' },
+  { code: '+44',  flag: '🇬🇧', name: 'United Kingdom' },
+  { code: '+971', flag: '🇦🇪', name: 'United Arab Emirates' },
+  { code: '+966', flag: '🇸🇦', name: 'Saudi Arabia' },
+  { code: '+974', flag: '🇶🇦', name: 'Qatar' },
+  { code: '+965', flag: '🇰🇼', name: 'Kuwait' },
+  { code: '+968', flag: '🇴🇲', name: 'Oman' },
+  { code: '+973', flag: '🇧🇭', name: 'Bahrain' },
+  { code: '+60',  flag: '🇲🇾', name: 'Malaysia' },
+  { code: '+65',  flag: '🇸🇬', name: 'Singapore' },
+  { code: '+81',  flag: '🇯🇵', name: 'Japan' },
+  { code: '+82',  flag: '🇰🇷', name: 'South Korea' },
+  { code: '+86',  flag: '🇨🇳', name: 'China' },
+  { code: '+49',  flag: '🇩🇪', name: 'Germany' },
+  { code: '+33',  flag: '🇫🇷', name: 'France' },
+  { code: '+39',  flag: '🇮🇹', name: 'Italy' },
+  { code: '+7',   flag: '🇷🇺', name: 'Russia' },
+  { code: '+55',  flag: '🇧🇷', name: 'Brazil' },
+  { code: '+27',  flag: '🇿🇦', name: 'South Africa' },
+  { code: '+61',  flag: '🇦🇺', name: 'Australia' },
+  { code: '+64',  flag: '🇳🇿', name: 'New Zealand' },
+  { code: '+92',  flag: '🇵🇰', name: 'Pakistan' },
+  { code: '+94',  flag: '🇱🇰', name: 'Sri Lanka' },
+  { code: '+977', flag: '🇳🇵', name: 'Nepal' },
+  { code: '+20',  flag: '🇪🇬', name: 'Egypt' },
+  { code: '+234', flag: '🇳🇬', name: 'Nigeria' },
+  { code: '+254', flag: '🇰🇪', name: 'Kenya' },
+  { code: '+212', flag: '🇲🇦', name: 'Morocco' },
 ];
 
 export interface PhoneCountryInputProps {
@@ -54,21 +54,36 @@ export interface PhoneCountryInputProps {
   error?: string;
   /** Field label shown above the number input (defaults to the mobile-app wording). */
   label?: string;
+  disabled?: boolean;
 }
 
-/** Minimum popover/list width for the country-code picker — the trigger
- * itself is only as wide as "🇧🇩 +880", far too narrow to read a list of
- * country names against, so unlike FloatingSelect this one keeps a fixed
- * comfortable width instead of mirroring the trigger's own width. */
-const CODE_PANEL_WIDTH = 240;
+/** Minimum popover/list width for the country-code picker */
+const CODE_PANEL_WIDTH = 280;
 
 const PhoneCountryInput: React.FC<PhoneCountryInputProps> = ({
-  countryCode, onCodeChange, number, onNumberChange, required, error, label,
+  countryCode, onCodeChange, number, onNumberChange, required, error, label, disabled,
 }) => {
   const { t } = useLanguage();
   const resolvedLabel = label ?? t('phone.mobileNumber');
   const [focused, setFocused] = useState(false);
   const [codeOpen, setCodeOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Clear search query on close
+  useEffect(() => {
+    if (!codeOpen) {
+      setSearchQuery('');
+    }
+  }, [codeOpen]);
+
+  const filteredCountryCodes = useMemo(() => {
+    if (!searchQuery.trim()) return COUNTRY_CODES;
+    const q = searchQuery.toLowerCase().trim();
+    return COUNTRY_CODES.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
+    );
+  }, [searchQuery]);
+
   const [rect, setRect] = useState<{ top: number; left: number; bottom: number; right: number } | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -137,17 +152,19 @@ const PhoneCountryInput: React.FC<PhoneCountryInputProps> = ({
             : focused
             ? `border-signal-500/50 ring-2 ring-signal-500/30`
             : 'border-ink-900/12'
-        }`}
+        } ${disabled ? 'opacity-60 bg-ink-900/5 pointer-events-none' : ''}`}
       >
         {/* Country code selector */}
         <div className="relative flex-shrink-0">
           <button
             ref={triggerRef}
             type="button"
+            disabled={disabled}
             onClick={() => setCodeOpen((o) => !o)}
-            className="h-full pl-2.5 pr-6 text-sm font-bold text-ink-900 bg-transparent focus:outline-none cursor-pointer border-r border-ink-900/10"
+            className="h-full pl-3 pr-6 text-sm font-bold text-ink-900 bg-transparent focus:outline-none cursor-pointer border-r border-ink-900/10 flex items-center gap-1.5 shrink-0"
           >
-            {selectedCode.flag} {selectedCode.code}
+            <span className="text-base leading-none">{selectedCode.flag}</span>
+            <span>{selectedCode.code}</span>
           </button>
           <ChevronDown
             size={12}
@@ -162,21 +179,56 @@ const PhoneCountryInput: React.FC<PhoneCountryInputProps> = ({
               <div
                 ref={panelRef}
                 style={{ position: 'fixed', top: rect.bottom + 6, left: rect.left, width: CODE_PANEL_WIDTH }}
-                className="z-[100] max-h-72 overflow-y-auto thin-scroll rounded-xl border border-ink-900/10 bg-surface shadow-2xl dropdown-pop py-1.5"
+                className="z-[100] flex flex-col max-h-72 rounded-xl border border-ink-900/10 bg-surface shadow-2xl dropdown-pop overflow-hidden"
               >
-                {COUNTRY_CODES.map((c) => (
-                  <button
-                    key={c.code + c.name}
-                    type="button"
-                    onClick={() => handlePick(c.code)}
-                    className={`w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-sm text-left hover:bg-ink-900/5 ${
-                      c.code === countryCode ? 'font-bold text-signal-600' : 'font-medium text-ink-900'
-                    }`}
-                  >
-                    <span>{c.flag} {c.code} <span className="text-ink-400 font-medium">{c.name}</span></span>
-                    {c.code === countryCode && <Check size={15} className="shrink-0" />}
-                  </button>
-                ))}
+                {/* Search input */}
+                <div className="p-2 border-b border-ink-900/8 bg-ink-900/[0.01] shrink-0 flex items-center gap-1.5">
+                  <Search size={14} className="text-ink-400 shrink-0 ml-1" />
+                  <input
+                    type="text"
+                    placeholder={t('common.search') || 'Search...'}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full text-xs bg-transparent focus:outline-none text-ink-900 font-medium placeholder-ink-400"
+                    autoFocus
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="p-0.5 rounded hover:bg-ink-900/5 text-ink-400 hover:text-ink-600"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+
+                {/* List container */}
+                <div className="overflow-y-auto thin-scroll py-1.5 flex-1">
+                  {filteredCountryCodes.length === 0 ? (
+                    <div className="px-3.5 py-3 text-xs text-ink-400 font-medium text-center">
+                      {t('common.noResults') || 'No results found'}
+                    </div>
+                  ) : (
+                    filteredCountryCodes.map((c) => (
+                      <button
+                        key={c.code + c.name}
+                        type="button"
+                        onClick={() => handlePick(c.code)}
+                        className={`w-full flex items-center justify-between gap-2.5 px-3.5 py-2 text-sm text-left hover:bg-ink-900/5 transition-colors ${
+                          c.code === countryCode ? 'font-bold text-signal-600 bg-signal-500/5' : 'font-medium text-ink-900'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-base shrink-0 leading-none">{c.flag}</span>
+                          <span className="truncate">{c.name}</span>
+                          <span className="text-ink-400 font-semibold text-xs shrink-0">({c.code})</span>
+                        </div>
+                        {c.code === countryCode && <Check size={15} className="shrink-0 text-signal-600" />}
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>,
               document.body
             )}
@@ -201,20 +253,52 @@ const PhoneCountryInput: React.FC<PhoneCountryInputProps> = ({
                   <div className="px-5 pt-1 pb-3 border-b border-ink-900/8 shrink-0">
                     <p className="text-sm font-bold text-ink-900">{t('phone.countryCode')}</p>
                   </div>
-                  <div className="overflow-y-auto thin-scroll py-1.5">
-                    {COUNTRY_CODES.map((c) => (
+
+                  {/* Mobile Search input */}
+                  <div className="px-5 py-2 border-b border-ink-900/8 bg-ink-900/[0.01] shrink-0 flex items-center gap-2">
+                    <Search size={16} className="text-ink-400 shrink-0" />
+                    <input
+                      type="text"
+                      placeholder={t('common.search') || 'Search...'}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full text-sm bg-transparent focus:outline-none text-ink-900 font-medium placeholder-ink-400 py-1"
+                    />
+                    {searchQuery && (
                       <button
-                        key={c.code + c.name}
                         type="button"
-                        onClick={() => handlePick(c.code)}
-                        className={`w-full flex items-center justify-between gap-2 px-5 py-3.5 text-[15px] text-left active:bg-ink-900/5 ${
-                          c.code === countryCode ? 'font-bold text-signal-600' : 'font-medium text-ink-900'
-                        }`}
+                        onClick={() => setSearchQuery('')}
+                        className="p-1 rounded-lg hover:bg-ink-900/5 text-ink-400 hover:text-ink-600 flex items-center justify-center"
                       >
-                        <span>{c.flag} {c.code} <span className="text-ink-400 font-medium">{c.name}</span></span>
-                        {c.code === countryCode && <Check size={17} className="shrink-0" />}
+                        <X size={15} />
                       </button>
-                    ))}
+                    )}
+                  </div>
+
+                  <div className="overflow-y-auto thin-scroll py-1.5 flex-1">
+                    {filteredCountryCodes.length === 0 ? (
+                      <div className="px-5 py-6 text-sm text-ink-400 font-medium text-center">
+                        {t('common.noResults') || 'No results found'}
+                      </div>
+                    ) : (
+                      filteredCountryCodes.map((c) => (
+                        <button
+                          key={c.code + c.name}
+                          type="button"
+                          onClick={() => handlePick(c.code)}
+                          className={`w-full flex items-center justify-between gap-2.5 px-5 py-3 text-[15px] text-left active:bg-ink-900/5 transition-colors ${
+                            c.code === countryCode ? 'font-bold text-signal-600 bg-signal-500/5' : 'font-medium text-ink-900'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span className="text-lg shrink-0 leading-none">{c.flag}</span>
+                            <span className="truncate">{c.name}</span>
+                            <span className="text-ink-400 font-semibold text-xs shrink-0">({c.code})</span>
+                          </div>
+                          {c.code === countryCode && <Check size={17} className="shrink-0 text-signal-600" />}
+                        </button>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>,
@@ -233,6 +317,7 @@ const PhoneCountryInput: React.FC<PhoneCountryInputProps> = ({
           />
           <input
             type="tel"
+            disabled={disabled}
             value={number}
             onChange={(e) => onNumberChange(e.target.value)}
             onFocus={() => setFocused(true)}
