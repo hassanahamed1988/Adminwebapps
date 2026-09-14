@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
-import { Languages, Check, ListChecks, ChevronRight } from 'lucide-react';
+import { Languages, Check, ListChecks, ChevronRight, Server } from 'lucide-react';
 import Topbar from '../components/Topbar';
 import { useLanguage, LANGUAGE_META, Language } from '../contexts/LanguageContext';
 
@@ -42,6 +42,21 @@ const Settings: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* Link to the Server Settings page */}
+        <Link
+          to="/server-settings"
+          className="flex items-center gap-3.5 bg-surface rounded-2xl border border-ink-900/8 card-shadow p-5 hover:border-signal-500/40 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-signal-500/10 text-signal-600 shrink-0">
+            <Server size={19} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-display font-extrabold text-sm text-ink-900">{t('nav.serverSettings')}</h3>
+            <p className="text-xs text-ink-500 mt-0.5">{t('serverSettings.subtitle') || 'Configure Backend & OCR server for FleetPro mobile app'}</p>
+          </div>
+          <ChevronRight size={18} className="text-ink-400 shrink-0" />
+        </Link>
 
         {/* Link to the existing Dropdown Settings page */}
         <Link

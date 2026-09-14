@@ -12,6 +12,7 @@ import UserDetail from './pages/UserDetail';
 import MobileAppNewUserForm from './pages/MobileAppNewUserForm';
 import NewAdminForm from './pages/NewAdminForm';
 import DropdownSettings from './pages/DropdownSettings';
+import ServerSettings from './pages/ServerSettings';
 import Settings from './pages/Settings';
 
 const App: React.FC = () => {
@@ -33,6 +34,7 @@ const App: React.FC = () => {
                 <Route path="/blocked" element={<UserListPage bucket="BLOCKED" />} />
                 <Route path="/user/:id" element={<UserDetail />} />
                 <Route path="/dropdown-settings" element={<DropdownSettings />} />
+                <Route path="/server-settings" element={<ServerSettings />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>
             </Routes>

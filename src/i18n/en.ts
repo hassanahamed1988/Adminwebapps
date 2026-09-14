@@ -65,6 +65,7 @@ const en = {
   'nav.inactive': 'Inactive Users',
   'nav.blocked': 'Blocked Users',
   'nav.dropdownSettings': 'Dropdown Settings',
+  'nav.serverSettings': 'Server Settings',
   'nav.settings': 'Settings',
   'sidebar.collapse': 'Collapse sidebar',
   'sidebar.logout': 'Log out',
@@ -356,6 +357,23 @@ const en = {
   'settings.bangla': 'Bangla',
   'settings.dropdownSettingsCard': 'Dropdown Settings',
   'settings.dropdownSettingsCardHint': 'Manage the options shown in registration form dropdowns',
+
+  // ── Server Settings page ──
+  'serverSettings.title': 'Server Settings',
+  'serverSettings.subtitle': 'Configure Backend & OCR server for FleetPro mobile app',
+  'settings.ocrBackendTitle': 'OCR & Backend API Configuration',
+  'settings.ocrBackendHint': 'Configure the central Backend / OCR server URL for FleetPro mobile app users. Mobile apps listen in real-time to route Delivery Note OCR scanning and AI processing to this server.',
+  'settings.backendUrlLabel': 'Backend / OCR Server URL',
+  'settings.backendUrlPlaceholder': 'https://example-ocr-server.run.app',
+  'settings.backendUrlHelp': 'Must be a valid HTTP or HTTPS address without trailing slash. Leave empty or reset to use the default app server.',
+  'settings.saveUrl': 'Save Configuration',
+  'settings.clearUrl': 'Reset to Default',
+  'settings.testConnection': 'Test Connection',
+  'settings.backendUrlSaved': 'Backend server URL saved successfully for all mobile users!',
+  'settings.backendUrlCleared': 'Backend server URL reset to default.',
+  'settings.backendUrlInvalid': 'Please enter a valid URL starting with http:// or https://',
+  'settings.currentActiveUrl': 'Active URL',
+  'settings.notConfigured': 'Default Server (Not Custom Configured)',
 
   // ── User Detail: tabs ──
   'tabs.personal': 'Personal Info',

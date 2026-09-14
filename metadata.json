@@ -1,6 +1,6 @@
 {
   "name": "Adminwebapp",
-  "description": "",
+  "description": "Admin web portal for FleetPro fleet management, user approvals, trip administration, and global backend OCR configuration.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

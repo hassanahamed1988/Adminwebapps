@@ -8,6 +8,7 @@ interface Props {
   value: string;
   onChange: (value: string) => void;
   type?: string;
+  placeholder?: string;
   required?: boolean;
   disabled?: boolean;
   readOnly?: boolean;
@@ -45,6 +46,7 @@ const FloatingInput: React.FC<Props> = ({
   value,
   onChange,
   type = 'text',
+  placeholder,
   required,
   disabled,
   readOnly,
@@ -60,9 +62,9 @@ const FloatingInput: React.FC<Props> = ({
   // can switch between " " (unfocused) and the generated hint (focused).
   const [isFocused, setIsFocused] = useState(false);
 
-  // When focused show the generated hint; otherwise use a single space so
-  // the CSS peer-[:not(:placeholder-shown)] selector keeps working.
-  const dynamicPlaceholder = isFocused ? buildPlaceholder(label) : ' ';
+  // When focused show the custom placeholder if provided, otherwise generated hint;
+  // otherwise use a single space so the CSS peer-[:not(:placeholder-shown)] selector keeps working.
+  const dynamicPlaceholder = isFocused ? (placeholder || buildPlaceholder(label)) : ' ';
 
   return (
     <div>

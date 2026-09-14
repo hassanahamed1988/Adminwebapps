@@ -52,6 +52,7 @@ const bn = {
   'nav.inactive': 'ইন-অ্যাক্টিভ ইউজার',
   'nav.blocked': 'ব্লক ইউজার',
   'nav.dropdownSettings': 'ড্রপডাউন সেটিংস',
+  'nav.serverSettings': 'Server Settings',
   'nav.settings': 'সেটিংস',
   'sidebar.collapse': 'সাইডবার বন্ধ করুন',
   'sidebar.logout': 'লগ আউট',
@@ -328,6 +329,23 @@ const bn = {
   'settings.bangla': 'বাংলা',
   'settings.dropdownSettingsCard': 'ড্রপডাউন সেটিংস',
   'settings.dropdownSettingsCardHint': 'রেজিস্ট্রেশন ফর্মের ড্রপডাউনে দেখানো অপশনগুলো পরিচালনা করুন',
+
+  // ── Server Settings page ──
+  'serverSettings.title': 'Server Settings',
+  'serverSettings.subtitle': 'ফ্লিটপ্রো মোবাইল অ্যাপের জন্য ব্যাকএন্ড ও OCR সার্ভার কনফিগারেশন',
+  'settings.ocrBackendTitle': 'ডেলিভারি নোট ও এআই সার্ভার কনফিগারেশন',
+  'settings.ocrBackendHint': 'ফ্লিটপ্রো মোবাইল অ্যাপ ব্যবহারকারীদের জন্য ব্যাকএন্ড ও ডেলিভারি নোট OCR সার্ভারের URL সেট করুন। মোবাইল অ্যাপ রিয়েল-টাইমে এই URL সিঙ্ক করে এআই এবং ডকুমেন্ট স্ক্যান সম্পন্ন করবে।',
+  'settings.backendUrlLabel': 'ব্যাকএন্ড / OCR সার্ভার URL',
+  'settings.backendUrlPlaceholder': 'https://example-ocr-server.run.app',
+  'settings.backendUrlHelp': 'অবশ্যই একটি বৈধ HTTP বা HTTPS অ্যাড্রেস হতে হবে (শেষে স্ল্যাশ ছাড়া)। ডিফল্ট সার্ভার ব্যবহার করতে খালি রেখে রিসেট করুন।',
+  'settings.saveUrl': 'সেভ করুন',
+  'settings.clearUrl': 'রিসেট করুন',
+  'settings.testConnection': 'কানেকশন টেস্ট',
+  'settings.backendUrlSaved': 'সব মোবাইল ব্যবহারকারীর জন্য ব্যাকএন্ড সার্ভার URL সফলভাবে সেভ করা হয়েছে!',
+  'settings.backendUrlCleared': 'ব্যাকএন্ড সার্ভার URL সফলভাবে রিসেট করা হয়েছে।',
+  'settings.backendUrlInvalid': 'অনুগ্রহ করে http:// বা https:// দিয়ে শুরু হওয়া একটি বৈধ URL প্রদান করুন',
+  'settings.currentActiveUrl': 'সক্রিয় URL',
+  'settings.notConfigured': 'ডিফল্ট সার্ভার (কাস্টম URL সেট করা নেই)',
 
   // ── User Detail: tabs ──
   'tabs.personal': 'পার্সোনাল তথ্য',
