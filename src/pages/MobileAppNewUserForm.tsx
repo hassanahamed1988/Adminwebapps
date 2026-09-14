@@ -47,7 +47,7 @@ import { useUsers } from '../contexts/UsersContext';
 import { useToast } from '../contexts/ToastContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { User, UserRole } from '../types';
-import { generateUserId, generateAccountNumber, sanitizeDocId, computeExpiryDate } from '../utils/accountUtils';
+import { generateUserId, sanitizeDocId, computeExpiryDate } from '../utils/accountUtils';
 import { getCountries, getNationalities } from '../utils/geoOptions';
 import {
   getGenders,
@@ -327,7 +327,6 @@ const MobileAppNewUserForm: React.FC = () => {
       const newUser: User = {
         id: docId,
         userId: finalUserId,
-        accountNumber: generateAccountNumber(),
         name: form.fullName.trim(),
         email: form.email.trim(),
         role: form.role,

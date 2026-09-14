@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import bcrypt from 'bcryptjs';
 import { getCollection, getSubcollection, saveDoc, deleteDocFrom } from '../services/firebase';
 import { User } from '../types';
-import { generateUserId, generateAccountNumber } from '../utils/accountUtils';
+import { generateUserId } from '../utils/accountUtils';
 
 const SUBCOLLECTIONS = [
   'trips',
@@ -109,12 +109,10 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     // User ID is only generated upon admin approval if it does not exist yet.
     const finalUserId = target.userId || generateUserId(usersRef.current);
-    const finalAccountNumber = target.accountNumber || generateAccountNumber();
 
     const updated: User = { 
       ...target, 
       userId: finalUserId,
-      accountNumber: finalAccountNumber,
       status: 'ENABLED', 
       statusTimestamp: new Date().toISOString(), 
       password: hashed 
@@ -122,7 +120,6 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     await saveDoc(collectionFor(updated), updated.id, updated);
     patchLocal(id, { 
       userId: finalUserId,
-      accountNumber: finalAccountNumber,
       status: 'ENABLED', 
       statusTimestamp: updated.statusTimestamp 
     });

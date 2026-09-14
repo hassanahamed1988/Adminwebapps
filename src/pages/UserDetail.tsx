@@ -342,7 +342,6 @@ const UserDetail: React.FC = () => {
                       ? ` · ${t('userDetail.applicationId')}: ${user.applicationId || user.id}`
                       : ` · ${t('userDetail.userId')}: ${user.userId || user.id}`
                     }
-                    {user.accountNumber ? ` · A/C: ${user.accountNumber}` : ''}
                   </p>
                 </div>
                 <StatusBadge user={user} />
