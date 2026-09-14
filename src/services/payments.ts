@@ -1,0 +1,243 @@
+// Payment History data layer.
+//
+// Backing store: `${collectionFor(user)}/{user.id}/payments` — a Firestore
+// subcollection whose name was already reserved in
+// UsersContext.SUBCOLLECTIONS (it's in the cascade-delete list) but had no
+// reader/writer anywhere in this app until now. This module is the single
+// place that reads, writes, and totals those records, so the Payment
+// History tab (and anything else in the future) never recomputes an
+// authoritative balance from ad-hoc frontend math — per spec Step 7,
+// "Calculation Integrity".
+import { getSubcollection, saveDoc, newDocId, deleteDocFrom } from './firebase';
+import { collectionFor } from '../contexts/UsersContext';
+import { PaymentTransaction, PaymentAuditEntry, PaymentStatus, TransactionType, User } from '../types';
+
+export function paymentsPathFor(user: Pick<User, 'id' | 'role'>): string {
+  return `${collectionFor(user)}/${user.id}/payments`;
+}
+
+/** Statuses that count toward "money the account has actually paid". */
+const PAID_STATUSES: PaymentStatus[] = ['PAID', 'PARTIALLY_PAID'];
+
+export interface PaymentSummary {
+  totalPaid: number;
+  totalDiscount: number;
+  totalPayable: number;
+  /** Positive = amount owed. Zero when settled. */
+  pending: number;
+  /** Set when the account has actually overpaid (pending would be negative) — shown as credit/advance instead of pending, per spec Step 2 / Card 2. */
+  creditBalance: number;
+}
+
+/**
+ * Total Payable = the account's package price (source of truth: packagePrice
+ * from registration, falling back to the raw `price` string field for older
+ * records that predate packagePrice).
+ */
+function totalPayableFor(user: User): number {
+  if (typeof user.packagePrice === 'number' && !isNaN(user.packagePrice)) return user.packagePrice;
+  const parsed = Number(user.price);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+/**
+ * Computes the lifetime summary cards from the transaction list — never
+ * from the scalar user.paidAmount/dueAmount fields directly, since those are
+ * legacy snapshots that can drift. The transaction records are authoritative.
+ */
+export function summarizePayments(user: User, transactions: PaymentTransaction[]): PaymentSummary {
+  let totalPaid = 0;
+  let totalDiscount = 0;
+
+  for (const tx of transactions) {
+    if (tx.status === 'CANCELLED' || tx.status === 'FAILED') continue;
+
+    if (PAID_STATUSES.includes(tx.status)) {
+      if (tx.transactionType === 'REFUND') {
+        totalPaid -= tx.paidAmount ?? tx.amount ?? 0;
+      } else if (tx.transactionType !== 'DISCOUNT') {
+        totalPaid += tx.paidAmount ?? tx.amount ?? 0;
+      }
+    }
+    if (tx.transactionType === 'DISCOUNT' && tx.status !== 'CANCELLED') {
+      totalDiscount += tx.discount ?? tx.amount ?? 0;
+    } else if (tx.discount) {
+      totalDiscount += tx.discount;
+    }
+  }
+
+  const totalPayable = totalPayableFor(user);
+  const rawPending = totalPayable - totalPaid - totalDiscount;
+
+  return {
+    totalPaid,
+    totalDiscount,
+    totalPayable,
+    pending: rawPending > 0 ? rawPending : 0,
+    creditBalance: rawPending < 0 ? Math.abs(rawPending) : 0,
+  };
+}
+
+export async function fetchPayments(user: Pick<User, 'id' | 'role'>): Promise<PaymentTransaction[]> {
+  const docs = await getSubcollection(paymentsPathFor(user));
+  return docs.map(normalizeTransaction).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+}
+
+const VALID_TYPES: TransactionType[] = ['SUBSCRIPTION', 'PAYMENT', 'DISCOUNT', 'REFUND', 'ADJUSTMENT', 'CREDIT'];
+const VALID_STATUSES: PaymentStatus[] = ['PAID', 'PENDING', 'FAILED', 'CANCELLED', 'REFUNDED', 'PARTIALLY_PAID'];
+
+/**
+ * Defensively fills in any field a stored doc might be missing.
+ *
+ * The `payments` subcollection name was already reserved (and possibly
+ * already written to by something else — the mobile app, an older admin
+ * build, or a partial manual entry) before this tab ever read from it, so a
+ * doc that doesn't match this module's exact shape is a real possibility,
+ * not just a theoretical one. Every render call site trusts transactionType
+ * and status to be one of the known enum values with no fallback (e.g.
+ * `tx.transactionType.toLowerCase()`), so a missing/unexpected value on
+ * either field previously threw a TypeError with no error boundary to catch
+ * it — crashing the whole app to a white screen. Normalizing once here,
+ * right after the read, is cheaper and safer than guarding every call site.
+ */
+function normalizeTransaction(raw: any): PaymentTransaction {
+  const transactionType: TransactionType = VALID_TYPES.includes(raw?.transactionType) ? raw.transactionType : 'PAYMENT';
+  const status: PaymentStatus = VALID_STATUSES.includes(raw?.status) ? raw.status : 'PENDING';
+  return {
+    ...raw,
+    id: raw?.id || '',
+    transactionType,
+    status,
+    amount: typeof raw?.amount === 'number' && !isNaN(raw.amount) ? raw.amount : Number(raw?.amount) || 0,
+    createdAt: raw?.createdAt || '',
+  };
+}
+
+/** Fields that are audit metadata themselves — excluded from the
+ *  previous/new value snapshots on an edit so an audit entry doesn't nest
+ *  a copy of the audit log (or stale id/createdAt) inside itself. */
+const AUDIT_EXCLUDED_FIELDS = new Set(['id', 'createdAt', 'updatedAt', 'auditLog']);
+
+function snapshotForAudit(tx: Partial<PaymentTransaction>): Partial<PaymentTransaction> {
+  const snapshot: Partial<PaymentTransaction> = {};
+  for (const key of Object.keys(tx) as (keyof PaymentTransaction)[]) {
+    if (AUDIT_EXCLUDED_FIELDS.has(key as string)) continue;
+    (snapshot as any)[key] = (tx as any)[key];
+  }
+  return snapshot;
+}
+
+export async function saveTransaction(
+  user: Pick<User, 'id' | 'role'>,
+  tx: Omit<PaymentTransaction, 'id' | 'createdAt'> & { id?: string; createdAt?: string },
+  editMeta?: { updatedBy: string; reason?: string }
+): Promise<PaymentTransaction> {
+  const path = paymentsPathFor(user);
+  const isEdit = !!tx.id;
+  const id = tx.id || newDocId(path);
+  const now = new Date().toISOString();
+
+  // Editing an existing transaction: fetch what's already stored and append
+  // an audit entry instead of silently overwriting it — per spec Step 7,
+  // history is append-only, never discarded.
+  let auditLog: PaymentAuditEntry[] | undefined;
+  let createdAt = tx.createdAt || now;
+  if (isEdit) {
+    const existing = await getSubcollection(path);
+    const prior = existing.find((d: any) => d.id === id) as PaymentTransaction | undefined;
+    if (prior) {
+      createdAt = tx.createdAt || prior.createdAt || now;
+      auditLog = Array.isArray(prior.auditLog) ? prior.auditLog.slice() : [];
+      auditLog.push({
+        previousValue: snapshotForAudit(prior),
+        newValue: snapshotForAudit(tx),
+        updatedBy: editMeta?.updatedBy || tx.createdBy || 'admin',
+        updatedAt: now,
+        reason: editMeta?.reason,
+      });
+    }
+  }
+
+  const record: PaymentTransaction = {
+    ...tx,
+    id,
+    createdAt,
+    updatedAt: now,
+    ...(auditLog ? { auditLog } : {}),
+  };
+  await saveDoc(path, id, record);
+  return record;
+}
+
+/**
+ * Re-fetches transactions and recomputes the summary right before a save —
+ * the Add Transaction form must never trust a Pending Balance number that's
+ * been sitting in frontend state, since another admin session (or the
+ * mobile app) could have written a transaction in the meantime. This is the
+ * closest thing to a "server-side" recheck available in this Firestore-direct
+ * architecture (there is no separate backend endpoint for payments), so it's
+ * the authoritative source consulted immediately before validating amount
+ * and saving.
+ */
+export async function getAuthoritativePendingBalance(user: User): Promise<PaymentSummary> {
+  const docs = await fetchPayments(user);
+  return summarizePayments(user, docs);
+}
+
+/**
+ * One-time backfill for accounts that predate the payments subcollection:
+ * turns the legacy scalar snapshot (packagePrice/discountAmount/paidAmount)
+ * into an equivalent opening transaction, so Total Paid / Total Discount in
+ * the new tab stay consistent with what the account already showed
+ * elsewhere instead of silently resetting to zero. Idempotent — checks for
+ * an existing backfill record before writing.
+ */
+export async function ensureBackfilled(user: User): Promise<void> {
+  const path = paymentsPathFor(user);
+  const existing = await getSubcollection(path);
+  if (existing.some((d: any) => d.referenceId === 'OPENING_BALANCE')) return;
+
+  const hasAnyLegacyAmount =
+    (typeof user.paidAmount === 'number' && user.paidAmount > 0) ||
+    (typeof user.discountAmount === 'number' && user.discountAmount > 0);
+  if (!hasAnyLegacyAmount) return;
+
+  const openingDate = user.activationDate || user.registrationDate || new Date().toISOString();
+
+  if (user.discountAmount && user.discountAmount > 0) {
+    await saveTransaction(user, {
+      transactionType: 'DISCOUNT',
+      description: 'Opening balance — discount recorded at registration',
+      amount: user.discountAmount,
+      discount: user.discountAmount,
+      status: 'PAID',
+      referenceId: 'OPENING_BALANCE',
+      createdBy: 'system',
+      createdAt: openingDate,
+    });
+  }
+  if (user.paidAmount && user.paidAmount > 0) {
+    await saveTransaction(user, {
+      transactionType: 'SUBSCRIPTION',
+      description: user.package ? `Opening balance — ${user.package}` : 'Opening balance — package payment',
+      amount: user.paidAmount,
+      paidAmount: user.paidAmount,
+      paymentMethod: user.paymentMethod,
+      status: 'PAID',
+      referenceId: 'OPENING_BALANCE',
+      createdBy: 'system',
+      createdAt: openingDate,
+    });
+  }
+}
+
+/**
+ * Deletes a transaction record from the subcollection.
+ * CAUTION: Deleting a transaction directly alters the computed lifetime summary
+ * balance for the user, since the summary is re-derived dynamically from all
+ * remaining transactions.
+ */
+export async function deleteTransaction(user: User, transactionId: string): Promise<void> {
+  const path = paymentsPathFor(user);
+  await deleteDocFrom(path, transactionId);
+}

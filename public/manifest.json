@@ -1,0 +1,18 @@
+{
+  "name": "FleetPro Admin",
+  "short_name": "FleetPro",
+  "description": "FleetPro ব্যবহারকারী ব্যবস্থাপনা ও নিয়ন্ত্রণ প্যানেল",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f5f8",
+  "theme_color": "#0eaeae",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

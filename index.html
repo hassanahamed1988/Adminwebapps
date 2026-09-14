@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="bn">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>FleetPro Admin — Control Tower</title>
+    <meta name="description" content="FleetPro ব্যবহারকারী ব্যবস্থাপনা ও নিয়ন্ত্রণ প্যানেল" />
+
+    <!--
+      ════════════════════════════════════════════════════════════════
+      Status-bar & navigation-bar tinting
+      ════════════════════════════════════════════════════════════════
+
+      theme-color (no media query) → default tint Chrome uses for the
+        system status bar and, on Android 8+, the bottom navigation bar.
+        ThemeContext.tsx overwrites this at runtime whenever the user
+        toggles light ↔ dark, so it always tracks the current canvas color.
+
+      Two media-query variants ensure Chrome applies the right color even
+        before JS runs (avoids a white-flash on cold start in dark mode).
+
+      msapplication-navbutton-color → legacy Edge / old IE address bar.
+
+      apple-mobile-web-app-capable + status-bar-style → iOS Safari PWA:
+        hides the browser chrome and lets us control the status bar.
+
+      color-scheme → hints the OS that this page supports dark, so the
+        system scrollbar, form controls, etc. match without extra CSS.
+      ════════════════════════════════════════════════════════════════
+    -->
+
+    <!-- Default (light) theme color — JS overwrites this immediately on load -->
+    <meta name="theme-color" content="#f3f5f8" />
+
+    <!-- Per-media variants for Chrome on Android (no-JS fallback) -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3f5f8" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#0b1220" />
+
+    <!-- Legacy Microsoft -->
+    <meta name="msapplication-navbutton-color" content="#f3f5f8" />
+
+    <!-- iOS Safari PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Color scheme declaration -->
+    <meta name="color-scheme" content="light dark" />
+
+    <!--
+      Inline script: read the persisted theme preference BEFORE first paint
+      so the status bar never flashes the wrong color on reload.
+    -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('fleetpro_admin_theme') === 'dark' ? 'dark' : 'light';
+          var colors = { light: '#f3f5f8', dark: '#0b1220' };
+          var c = colors[t];
+          document.querySelector('meta[name="theme-color"]:not([media])').setAttribute('content', c);
+          document.querySelector('meta[name="msapplication-navbutton-color"]').setAttribute('content', c);
+          document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+            .setAttribute('content', t === 'dark' ? 'black-translucent' : 'default');
+          if (t === 'dark') document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
