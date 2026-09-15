@@ -8,6 +8,7 @@ import {
   setDoc,
   deleteDoc,
   getDocs,
+  onSnapshot,
   persistentLocalCache,
   persistentMultipleTabManager,
 } from 'firebase/firestore';
@@ -71,3 +72,50 @@ export async function trySignInFirebaseAuth(email: string, password: string): Pr
     return false;
   }
 }
+
+/**
+ * Subscribes to real-time changes on a Firestore top-level collection.
+ * Returns an unsubscribe callback.
+ */
+export function subscribeCollection(
+  collectionName: string,
+  onData: (items: any[]) => void,
+  onError?: (err: any) => void
+): () => void {
+  return onSnapshot(
+    collection(db, collectionName),
+    (snap) => {
+      const items: any[] = [];
+      snap.forEach((d) => items.push(decryptSensitiveFields({ ...d.data(), id: d.id })));
+      onData(items);
+    },
+    (err) => {
+      console.error(`Error subscribing to collection ${collectionName}:`, err);
+      if (onError) onError(err);
+    }
+  );
+}
+
+/**
+ * Subscribes to real-time changes on a Firestore collectionGroup (e.g. 'Purchase').
+ * Returns an unsubscribe callback.
+ */
+export function subscribeCollectionGroup(
+  groupName: string,
+  onData: (items: any[]) => void,
+  onError?: (err: any) => void
+): () => void {
+  return onSnapshot(
+    collectionGroup(db, groupName),
+    (snap) => {
+      const items: any[] = [];
+      snap.forEach((d) => items.push(decryptSensitiveFields({ ...d.data(), id: d.id })));
+      onData(items);
+    },
+    (err) => {
+      console.error(`Error subscribing to collection group ${groupName}:`, err);
+      if (onError) onError(err);
+    }
+  );
+}
+

@@ -53,6 +53,7 @@ const bn = {
   'nav.blocked': 'ব্লক ইউজার',
   'nav.dropdownSettings': 'ড্রপডাউন সেটিংস',
   'nav.serverSettings': 'Server Settings',
+  'nav.purchaseManager': 'পারচেজ ম্যানেজার',
   'nav.settings': 'সেটিংস',
   'sidebar.collapse': 'সাইডবার বন্ধ করুন',
   'sidebar.logout': 'লগ আউট',

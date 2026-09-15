@@ -41,6 +41,7 @@ const hi: Record<string, string> = {
   'nav.blocked': 'ब्लॉक किए गए उपयोगकर्ता',
   'nav.dropdownSettings': 'ड्रॉपडाउन सेटिंग्स',
   'nav.serverSettings': 'Server Settings',
+  'nav.purchaseManager': 'खरीद प्रबंधक',
   'nav.settings': 'सेटिंग्स',
   'sidebar.collapse': 'साइडबार छोटा करें',
   'sidebar.logout': 'लॉग आउट',

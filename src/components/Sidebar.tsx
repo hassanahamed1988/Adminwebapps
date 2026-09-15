@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutGrid, UserCheck, UserX, Ban, Clock3, LogOut, UserPlus, UserCog, ListChecks, Server, Settings as SettingsIcon, Menu } from 'lucide-react';
+import { LayoutGrid, UserCheck, UserX, Ban, Clock3, LogOut, UserPlus, UserCog, ListChecks, Server, Settings as SettingsIcon, Menu, Briefcase } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import logo from '../assets/logo.png';
@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { to: '/active', labelKey: 'nav.active', icon: UserCheck },
   { to: '/inactive', labelKey: 'nav.inactive', icon: UserX },
   { to: '/blocked', labelKey: 'nav.blocked', icon: Ban },
+  { to: '/purchase-manager', labelKey: 'nav.purchaseManager', icon: Briefcase },
   { to: '/dropdown-settings', labelKey: 'nav.dropdownSettings', icon: ListChecks },
   { to: '/server-settings', labelKey: 'nav.serverSettings', icon: Server },
   { to: '/settings', labelKey: 'nav.settings', icon: SettingsIcon },

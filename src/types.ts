@@ -177,3 +177,45 @@ export interface MessPaymentRequest {
     accountNumber?: string;
   };
 }
+
+// ── Purchase Manager & Partners ──
+export type PartnerAccountType = 'MANAGER' | 'PARTNER';
+export type PartnerStatus = 'active' | 'inactive' | 'deleted';
+
+export interface Partner {
+  id: string;
+  partnerId?: string; // e.g. "MGR-1234567" for manager, "1234567" for partner
+  userId: string;
+  name: string;
+  mobile?: string;
+  dob?: string;
+  nationality?: string;
+  country?: string;
+  stateNumber?: string;
+  zoneNumber?: string;
+  buildingNumber?: string;
+  electricityNumber?: string;
+  areaName?: string;
+  monthlySalary?: string | number;
+  price?: string | number;
+  joiningDate?: string;
+  joiningTime?: string;
+  createdAt?: number;
+  avatar?: string | null;
+  accountType: PartnerAccountType;
+  managerId?: string; // ID of the supervising manager partner (empty for managers)
+  status: PartnerStatus;
+  [key: string]: any;
+}
+
+export interface PurchaseDoc {
+  id: string;
+  userId?: string;
+  hypermarketName?: string;
+  date?: string;
+  amount?: number | string;
+  status?: string;
+  items?: any[];
+  [key: string]: any;
+}
+

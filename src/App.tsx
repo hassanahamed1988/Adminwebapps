@@ -13,6 +13,7 @@ import MobileAppNewUserForm from './pages/MobileAppNewUserForm';
 import NewAdminForm from './pages/NewAdminForm';
 import DropdownSettings from './pages/DropdownSettings';
 import ServerSettings from './pages/ServerSettings';
+import PurchaseManager from './pages/PurchaseManager';
 import Settings from './pages/Settings';
 
 const App: React.FC = () => {
@@ -32,6 +33,7 @@ const App: React.FC = () => {
                 <Route path="/active" element={<UserListPage bucket="ACTIVE" />} />
                 <Route path="/inactive" element={<UserListPage bucket="INACTIVE" />} />
                 <Route path="/blocked" element={<UserListPage bucket="BLOCKED" />} />
+                <Route path="/purchase-manager" element={<PurchaseManager />} />
                 <Route path="/user/:id" element={<UserDetail />} />
                 <Route path="/dropdown-settings" element={<DropdownSettings />} />
                 <Route path="/server-settings" element={<ServerSettings />} />

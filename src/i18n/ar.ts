@@ -40,6 +40,7 @@ const ar: Record<string, string> = {
   'nav.blocked': 'المستخدمون المحظورون',
   'nav.dropdownSettings': 'إعدادات القوائم المنسدلة',
   'nav.serverSettings': 'Server Settings',
+  'nav.purchaseManager': 'مدير المشتريات',
   'nav.settings': 'الإعدادات',
   'sidebar.collapse': 'طي الشريط الجانبي',
   'sidebar.logout': 'تسجيل الخروج',

@@ -66,6 +66,7 @@ const en = {
   'nav.blocked': 'Blocked Users',
   'nav.dropdownSettings': 'Dropdown Settings',
   'nav.serverSettings': 'Server Settings',
+  'nav.purchaseManager': 'Purchase Manager',
   'nav.settings': 'Settings',
   'sidebar.collapse': 'Collapse sidebar',
   'sidebar.logout': 'Log out',
